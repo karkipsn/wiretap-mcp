@@ -1,0 +1,72 @@
+{
+  "app" : {
+    "build" : "24904",
+    "bundleId" : "com.apple.dt.xctest.tool",
+    "name" : "xctest",
+    "version" : "16.0"
+  },
+  "ble" : [
+    {
+      "device" : "MS2-A1B2",
+      "id" : "9611E3D9-4CAD-4C34-9A74-84A8B34F93DD",
+      "timestamp" : "1970-01-01T00:16:41.000Z",
+      "type" : "connected"
+    },
+    {
+      "decoded" : {
+        "a8" : "2.1",
+        "status" : "LOW_BATTERY"
+      },
+      "detail" : "alert",
+      "hex" : "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab",
+      "id" : "3C3B4B58-E5C0-4F32-8FB3-D94AD56DC672",
+      "timestamp" : "1970-01-01T00:16:42.000Z",
+      "type" : "notification",
+      "uuid" : "C0DEC0DE-1003"
+    },
+    {
+      "device" : "MS2-A1B2",
+      "error" : "stale cert",
+      "id" : "8FFBFC74-9BE9-4389-81A8-962722D7A6AE",
+      "timestamp" : "1970-01-01T00:16:43.000Z",
+      "type" : "authFailed"
+    }
+  ],
+  "environment" : {
+    "locale" : "en_US@rg=sezzzz",
+    "os" : "macOS",
+    "osVersion" : "Version 26.6 (Build 25G5028f)"
+  },
+  "exportedAt" : "2026-06-04T11:59:33.138Z",
+  "network" : [
+    {
+      "durationMs" : 120,
+      "id" : "A6759BE0-878A-473A-BF74-1409B119629C",
+      "method" : "POST",
+      "requestBody" : "{\"deviceId\":\"MS2-A1B2\"}",
+      "requestHeaders" : {
+
+      },
+      "responseBody" : "{\"error\":\"device not authenticated\"}",
+      "responseHeaders" : {
+
+      },
+      "statusCode" : 401,
+      "timestamp" : "1970-01-01T00:16:44.000Z",
+      "url" : "https:\/\/api\/sessions"
+    }
+  ],
+  "nfc" : [
+    {
+      "detail" : "MS2-A1B2",
+      "id" : "D4A0C158-3A24-4083-8DC9-50BA27102F75",
+      "timestamp" : "1970-01-01T00:16:40.000Z",
+      "type" : "scanCompleted"
+    }
+  ],
+  "range" : {
+    "end" : "1970-01-01T00:16:44.000Z",
+    "start" : "1970-01-01T00:16:40.000Z"
+  },
+  "schemaVersion" : 1
+}

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "exportedAt": "2026-06-04T10:00:05.000Z",
+  "app": { "bundleId": "se.novason.ms2", "name": "MS2", "version": "1.0.0", "build": "42" },
+  "environment": { "os": "iOS", "osVersion": "17.4", "device": "iPhone 15", "locale": "en_US" },
+  "range": { "start": "2026-06-04T10:00:00.000Z", "end": "2026-06-04T10:00:04.600Z" },
+  "network": [
+    {
+      "id": "n1",
+      "timestamp": "2026-06-04T10:00:03.900Z",
+      "method": "GET",
+      "url": "https://api.example.com/v1/features",
+      "requestHeaders": { "Authorization": "Bearer [redacted]", "Accept": "application/json" },
+      "statusCode": 200,
+      "responseBody": "{\"features\":[\"ISO_5349_2\"]}",
+      "durationMs": 88
+    },
+    {
+      "id": "n2",
+      "timestamp": "2026-06-04T10:00:04.500Z",
+      "method": "POST",
+      "url": "https://api.example.com/v1/sessions",
+      "requestHeaders": { "Authorization": "Bearer [redacted]", "Content-Type": "application/json" },
+      "requestBody": "{\"deviceId\":\"MS2-A1B2\"}",
+      "statusCode": 401,
+      "responseBody": "{\"error\":\"device not authenticated\"}",
+      "durationMs": 120,
+      "error": null
+    }
+  ],
+  "ble": [
+    { "id": "b1", "timestamp": "2026-06-04T10:00:01.000Z", "type": "connecting", "device": "MS2-A1B2", "detail": "scan matched primary service" },
+    { "id": "b2", "timestamp": "2026-06-04T10:00:01.180Z", "type": "connected", "device": "MS2-A1B2" },
+    { "id": "b3", "timestamp": "2026-06-04T10:00:01.420Z", "type": "serviceDiscovered", "uuid": "C0DEC0DE-2000-4B52-A3F1-9F49C1B6D801", "device": "MS2-A1B2", "detail": "control service; mtu=247" },
+    { "id": "b4", "timestamp": "2026-06-04T10:00:01.600Z", "type": "mtuNegotiated", "device": "MS2-A1B2", "detail": "247" },
+    { "id": "b5", "timestamp": "2026-06-04T10:00:01.800Z", "type": "pairingStarted", "device": "MS2-A1B2", "detail": "LESC Just Works" },
+    { "id": "b6", "timestamp": "2026-06-04T10:00:02.300Z", "type": "pairingSuccess", "device": "MS2-A1B2" },
+    { "id": "b7", "timestamp": "2026-06-04T10:00:02.500Z", "type": "authStarted", "device": "MS2-A1B2", "detail": "ECDSA challenge; 32-byte nonce" },
+    { "id": "b8", "timestamp": "2026-06-04T10:00:02.520Z", "type": "characteristicWrite", "uuid": "C0DEC0DE-2001-4B52-A3F1-9F49C1B6D801", "device": "MS2-A1B2", "hex": "0a20", "detail": "ChallengeRequest written to CONTROL" },
+    { "id": "b9", "timestamp": "2026-06-04T10:00:03.400Z", "type": "notification", "uuid": "C0DEC0DE-2001-4B52-A3F1-9F49C1B6D801", "device": "MS2-A1B2", "hex": "12473045022100abcdef0011223344556677889900aabbccddeeff00112233445566778899aabb", "detail": "auth response" },
+    { "id": "b10", "timestamp": "2026-06-04T10:00:03.450Z", "type": "authFailed", "device": "MS2-A1B2", "error": "SecKeyVerifySignature failed: signature does not match SHA256(nonce) — stale device cert from previous bond?" },
+    { "id": "b11", "timestamp": "2026-06-04T10:00:03.600Z", "type": "disconnected", "device": "MS2-A1B2", "error": "auth failed; central dropped link" }
+  ],
+  "nfc": [
+    { "id": "f1", "timestamp": "2026-06-04T10:00:00.000Z", "type": "scanStarted", "detail": "requireOobHandshake=false" },
+    { "id": "f2", "timestamp": "2026-06-04T10:00:00.300Z", "type": "tagDetected", "descriptor": "ISO7816 / NFC Forum Type 4" },
+    { "id": "f3", "timestamp": "2026-06-04T10:00:00.450Z", "type": "ndefRead", "detail": "recordCount=2" },
+    { "id": "f4", "timestamp": "2026-06-04T10:00:00.500Z", "type": "recordParsed", "descriptor": "application/vnd.ms2.ios-trust", "hex": "0a064d53322d41314232" },
+    { "id": "f5", "timestamp": "2026-06-04T10:00:00.620Z", "type": "iosTrustDecoded", "descriptor": "application/vnd.ms2.ios-trust", "detail": "deviceId=MS2-A1B2 hasCert=true serviceUuid=C0DEC0DE-1000-…" },
+    { "id": "f6", "timestamp": "2026-06-04T10:00:00.700Z", "type": "scanCompleted", "detail": "deviceName=MS2-A1B2" }
+  ]
+}
