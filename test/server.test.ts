@@ -9,12 +9,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { promises as fs } from "node:fs";
+import http from "node:http";
 import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
 
 import * as tools from "../src/tools.js";
 import { TOOL_NAMES } from "../src/tools.js";
+import { configureLiveBridge } from "../src/session.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixtures = path.join(here, "fixtures");
@@ -153,4 +155,43 @@ test("search finds matching events across all streams", async () => {
   const none = await tools.search({ session: file, query: "ZZZNOTFOUND" });
   assert.match(none, /no matches/i);
   await fs.rm(dir, { recursive: true, force: true });
+});
+
+// Live mode: tools fetch session from a mock bridge (TRACER-004 AC-7/AC-8 Node side)
+test("live mode: tools fetch live session from running bridge", async () => {
+  // Spin up a minimal HTTP server that mimics WireTap.startLocalBridge()
+  const server = http.createServer((_req, res) => {
+    const body = JSON.stringify(mixedSession);
+    res.writeHead(200, {
+      "Content-Type": "application/json",
+      "X-WireTap-Bridge": "1",
+    });
+    res.end(body);
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = (server.address() as { port: number });
+
+  try {
+    configureLiveBridge(`http://127.0.0.1:${port}`);
+
+    // listSessions — live path: reports bridge reachable + session header
+    const list = await tools.listSessions();
+    assert.match(list, /Live bridge:.*reachable/);
+    assert.match(list, /network=3 ble=2 nfc=1/);
+
+    // getOverview with no explicit path — fetches from bridge, not disk
+    const overview = await tools.getOverview();
+    assert.match(overview, /errors: network=2 ble=1/);
+    assert.match(overview, /https:\/\/x\/fail/);
+
+    // getNfcRecords — also uses bridge
+    const nfc = await tools.getNfcRecords();
+    assert.match(nfc, /scanCompleted/);
+    assert.match(nfc, /MS2/);
+  } finally {
+    configureLiveBridge(null);
+    await new Promise<void>((resolve, reject) =>
+      server.close((err) => (err ? reject(err) : resolve()))
+    );
+  }
 });

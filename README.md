@@ -15,16 +15,15 @@ It is **read-only** — it inspects session files; it cannot modify or replay tr
 
 ## Status & maturity
 
-Be clear-eyed about what exists today:
-
 | Piece | Status |
 |-------|--------|
-| **File mode** (read an exported `.wiretapsession`) | ✅ Built. Manually verified via the stdio handshake + `tools/list` + `tools/call`, and cross-validated against a real file emitted by the Swift `WireTap` package. |
-| The 7 tools below | ✅ Built; covered by the test suite + the smoke test. |
-| **Automated test suite** | ✅ `npm test` runs the TRACER-004 ACs (`test/server.test.ts`). Includes a golden cross-language test pinning the timeline to the Swift renderer. |
-| **Live mode** (query a running app over a localhost bridge) | ◻️ Not built. File mode only for now. |
-| MCP **resources** (`wiretap://…`) and canned **prompts** | ◻️ Not built — tools only. |
-| Verified *inside* each named agent (Claude Code, Cursor, …) | ◻️ Not individually. It speaks standard MCP stdio, so any MCP-capable client should work, but I've confirmed the protocol, not each app. |
+| **File mode** (read an exported `.wiretapsession`) | ✅ Built + verified via stdio handshake and cross-validated against Swift. |
+| **7 MCP tools** | ✅ Built; covered by the test suite (`npm test`). |
+| **Live mode** (`--live` / `WIRETAP_BRIDGE_URL`) | ✅ Built. Requires `WireTap.startLocalBridge()` in the running app. |
+| **MCP resources** (`wiretap://session/current`, `wiretap://session/{path}`) | ✅ Built. |
+| **Canned prompts** (`diagnose-disconnect`, `explain-network-failures`) | ✅ Built. |
+| **Automated test suite** | ✅ `npm test` — 10 tests including golden cross-language parity. |
+| Verified *inside* each named agent (Claude Code, Cursor, …) | ◻️ Speaks standard MCP stdio; protocol verified, per-app UX not individually confirmed. |
 
 **Who can produce sessions today:** only the **Swift `WireTap` package** emits `.wiretapsession`
 files (see TRACER-002/003). React Native / Flutter *can* feed this server, but **no exporter
@@ -37,17 +36,21 @@ responsibility outside Swift.
 ## How it fits the bigger picture
 
 ```
-Your app                           wiretap-mcp (this)            AI agent
-────────                           ─────────────────            ────────
-Swift WireTap pkg  ✅ today  ┐                                   any MCP client
-React Native     (DIY export)├─►  .wiretapsession (JSON)  ──►   (Claude Code,
-Flutter / native (DIY export)┘     reads (read-only)            Cursor, VS Code…)
+Your app (running)                 wiretap-mcp (this)            AI agent
+──────────────────                 ─────────────────            ────────
+Swift WireTap pkg                                                any MCP client
+  startLocalBridge() ──live──────► fetch /session live   ──►   (Claude Code,
+  exportSessionData() ──file─────► .wiretapsession JSON        Cursor, VS Code…)
+React Native  (DIY export) ──────►  read-only, redacted
+Flutter       (DIY export) ──────►
 ```
 
-The server depends only on the **`.wiretapsession` JSON contract** (see
-[`src/types.ts`](src/types.ts)), not on Swift — so it's producer-agnostic. **Today the
-only shipped producer is the Swift `WireTap` package.** A hybrid app can feed it too, but
-you'd write the serialization to the contract yourself (no bridge is provided yet).
+Two modes, same 7 tools:
+- **File mode** — export once, point the server at the file or directory.
+- **Live mode** (`--live`) — the server fetches fresh data from the running app on every call.
+
+The server depends only on the **`.wiretapsession` JSON contract** ([`src/types.ts`](src/types.ts)).
+Today the only shipped producer is the Swift `WireTap` package; any app that emits the contract can feed it.
 
 ---
 
@@ -55,13 +58,14 @@ you'd write the serialization to the contract yourself (no bridge is provided ye
 
 - Node.js 18+
 - An MCP-capable agent (Claude Code, Cursor, VS Code Agent mode, Windsurf)
+- For live mode: the Swift `WireTap` package with `WireTap.startLocalBridge()` called in the app
 
 ## Build
 
 ```bash
-cd LocalPackages/wiretap-mcp
+cd wiretap-mcp      # it's a submodule of the WireTap repo
 npm install
-npm run build      # → dist/
+npm run build       # → dist/
 ```
 
 ## Try it without an agent (MCP Inspector)
@@ -129,6 +133,34 @@ The session source can also be set via env instead of an arg:
 
 Then just ask the agent: *"Use the wiretap tools — why did the last pairing fail?"*
 
+### Live mode (query a running app)
+
+Add `WireTap.startLocalBridge()` to your app's debug startup (requires the Swift `WireTap`
+package), then pass `--live` to the server:
+
+```jsonc
+{
+  "mcpServers": {
+    "wiretap": {
+      "command": "node",
+      "args": ["/abs/path/to/wiretap-mcp/dist/index.js", "--live"]
+      // custom port: "--live", "9090"
+    }
+  }
+}
+```
+
+Or via environment variable:
+
+```bash
+WIRETAP_BRIDGE_URL=http://127.0.0.1:8787 node dist/index.js
+# or just the port:
+WIRETAP_BRIDGE_PORT=8787 node dist/index.js
+```
+
+In live mode every tool call fetches fresh data from the running app. If the bridge is
+unreachable the tool returns a clear error — it does not silently fall back to a stale file.
+
 ---
 
 ## Tools
@@ -185,16 +217,15 @@ npm run build        # compile to dist/
 npm test             # TRACER-004 acceptance tests (node:test via tsx)
 ```
 
-## Roadmap (aligned with `../WireTap/doc/specs/TRACER-004`)
+## Roadmap (aligned with `../doc/specs/TRACER-004`)
 
-- ✅ **File mode** — read exported sessions. *(done)*
-- ✅ **Automated tests** — TRACER-004 ACs in `test/server.test.ts`. *(done)*
-- ◻️ **Live mode** — an opt-in localhost read-only HTTP bridge in the app so the agent queries
-  traffic *as it happens*, not just from a file. *(not started)*
-- ◻️ **MCP resources** (`wiretap://session/current`) and canned **prompts** (`diagnose-disconnect`).
-  *(not started)*
+- ✅ **File mode** — read exported sessions.
+- ✅ **Automated tests** — 10 ACs in `test/server.test.ts`, including golden cross-language parity.
+- ✅ **Live mode** — `--live [port]` / `WIRETAP_BRIDGE_URL` connects to the running app.
+- ✅ **MCP resources** — `wiretap://session/current` and `wiretap://session/{path}`.
+- ✅ **Canned prompts** — `diagnose-disconnect` and `explain-network-failures`.
 - ◻️ **Hybrid exporters** — a shared serializer / native bridge so RN & Flutter can emit
-  `.wiretapsession` without hand-rolling it. *(not started)*
+  `.wiretapsession` without hand-rolling it.
 
 **Anti-drift guarantee:** `wiretap_get_timeline` is rendered by `src/llm.ts`, a faithful port of
 the Swift package's TRACER-003 `LLMRenderer`. The test `AC-2` asserts its output is
