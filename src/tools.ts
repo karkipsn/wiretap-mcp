@@ -8,7 +8,8 @@
 
 import path from "node:path";
 import { Stream } from "./types.js";
-import { loadSession, findSessionFiles, getDefaultSource, SessionError } from "./session.js";
+import { loadSession, findSessionFiles, getDefaultSource, SessionError, getLiveBridgeUrl } from "./session.js";
+import { isBridgeAlive } from "./bridge.js";
 import { summarizeNetwork, summarizeBle, summarizeNfc, detailNetwork } from "./format.js";
 import { renderLLMMarkdown, defaultLLMOptions } from "./llm.js";
 
@@ -42,6 +43,17 @@ async function withSession(sessionPath: string | undefined, body: (loaded: Await
 }
 
 export async function listSessions(dir?: string): Promise<string> {
+  // Live mode: show bridge status instead of a directory listing.
+  const liveUrl = getLiveBridgeUrl();
+  if (!dir && liveUrl) {
+    const alive = await isBridgeAlive(liveUrl);
+    if (alive) {
+      const { session, file } = await loadSession();
+      return `Live bridge: ${liveUrl} (reachable)\n${sessionHeader(file, session)}`;
+    }
+    return `Live bridge: ${liveUrl} (unreachable — is the app running with WireTap.startLocalBridge()?)`;
+  }
+
   const target = dir ? path.resolve(dir) : getDefaultSource();
   const files = await findSessionFiles(target);
   if (files.length === 0) {

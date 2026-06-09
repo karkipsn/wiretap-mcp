@@ -1,10 +1,11 @@
 /**
- * Loading and normalizing WireTap sessions from disk.
+ * Loading and normalizing WireTap sessions from disk or from a live bridge.
  *
  * Resolution order for "which session?":
  *   1. An explicit path passed by a tool call (file or directory).
- *   2. The server's default source (CLI arg, or WIRETAP_SESSION / WIRETAP_SESSIONS_DIR env).
- *   3. The current working directory.
+ *   2. Live bridge, if configured via configureLiveBridge() (TRACER-004 live mode).
+ *   3. The server's default source (CLI arg, or WIRETAP_SESSION / WIRETAP_SESSIONS_DIR env).
+ *   4. The current working directory.
  *
  * If the resolved path is a directory, the most recently modified `.wiretapsession`
  * (or `.json`) file in it is used.
@@ -18,13 +19,30 @@ import {
   Stream,
   SUPPORTED_SCHEMA_MAJOR,
 } from "./types.js";
+import { fetchLiveSession, isBridgeAlive, BridgeError } from "./bridge.js";
 
 const SESSION_EXTENSIONS = [".wiretapsession", ".json"];
 
 export class SessionError extends Error {}
+export { BridgeError };
 
 /** The server's default session source, set once at startup from argv/env. */
 let defaultSource: string = resolveStartupSource();
+
+/** When set, tool calls without an explicit path fetch from the running app. */
+let liveBridgeUrl: string | null = null;
+
+/**
+ * Configure the live bridge base URL (e.g. "http://127.0.0.1:8787").
+ * Pass null to disable live mode and revert to file-based loading.
+ */
+export function configureLiveBridge(url: string | null): void {
+  liveBridgeUrl = url;
+}
+
+export function getLiveBridgeUrl(): string | null {
+  return liveBridgeUrl;
+}
 
 function resolveStartupSource(): string {
   const arg = process.argv[2];
@@ -108,6 +126,23 @@ export async function loadSession(explicit?: string): Promise<{
   file: string;
   session: WireTapSession;
 }> {
+  // Live mode: when no explicit path is given and a bridge is configured, fetch live.
+  if (!explicit && liveBridgeUrl) {
+    try {
+      const raw = await fetchLiveSession(liveBridgeUrl);
+      const session = normalizeSession(raw, liveBridgeUrl);
+      return { file: `(live ${liveBridgeUrl})`, session };
+    } catch (e: any) {
+      if (e instanceof BridgeError) {
+        throw new SessionError(
+          `${e.message}\nFalling back to file mode is not automatic — ` +
+          `fix the bridge or remove --live / WIRETAP_BRIDGE_URL.`
+        );
+      }
+      throw e;
+    }
+  }
+
   const file = await resolveSessionFile(explicit);
 
   let text: string;
@@ -124,10 +159,16 @@ export async function loadSession(explicit?: string): Promise<{
     throw new SessionError(`File ${file} is not valid JSON: ${e.message}`);
   }
 
+  const session = normalizeSession(raw, file);
+  return { file, session };
+}
+
+function normalizeSession(raw: any, source: string): WireTapSession {
   const version = Number(raw.schemaVersion ?? 1);
   if (Math.floor(version) > SUPPORTED_SCHEMA_MAJOR) {
     throw new SessionError(
-      `Unsupported schema version ${version} (this server supports major ${SUPPORTED_SCHEMA_MAJOR}). Update wiretap-mcp.`
+      `Unsupported schema version ${version} (this server supports major ${SUPPORTED_SCHEMA_MAJOR}). ` +
+      `Update wiretap-mcp. (source: ${source})`
     );
   }
 
@@ -149,7 +190,7 @@ export async function loadSession(explicit?: string): Promise<{
   session.ble.sort(byTime);
   session.nfc.sort(byTime);
 
-  return { file, session };
+  return session;
 }
 
 /** Merge all three streams into one ascending-time timeline. */

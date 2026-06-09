@@ -120,3 +120,37 @@ test("AC-7 all tools are read-only by name", () => {
   }
   assert.equal(TOOL_NAMES.length, 7);
 });
+
+// Coverage: wiretap_get_overview
+test("get_overview returns error counts and session header", async () => {
+  const { dir, file } = await tmpSession(mixedSession);
+  const out = await tools.getOverview(file);
+  assert.match(out, /errors: network=2 ble=1/);
+  assert.match(out, /https:\/\/x\/fail/);
+  assert.match(out, /https:\/\/x\/err/);
+  assert.match(out, /dropped/);
+  await fs.rm(dir, { recursive: true, force: true });
+});
+
+// Coverage: wiretap_get_nfc_records
+test("get_nfc_records lists NFC events", async () => {
+  const { dir, file } = await tmpSession(mixedSession);
+  const out = await tools.getNfcRecords(file);
+  assert.match(out, /nfc events/i);
+  assert.match(out, /scanCompleted/);
+  assert.match(out, /MS2/);
+  await fs.rm(dir, { recursive: true, force: true });
+});
+
+// Coverage: wiretap_search
+test("search finds matching events across all streams", async () => {
+  const { dir, file } = await tmpSession(mixedSession);
+  // "MS2" appears in BLE device and NFC detail
+  const out = await tools.search({ session: file, query: "MS2" });
+  assert.match(out, /MS2/);
+  assert.match(out, /search "MS2"/);
+  // searching for something absent returns no matches
+  const none = await tools.search({ session: file, query: "ZZZNOTFOUND" });
+  assert.match(none, /no matches/i);
+  await fs.rm(dir, { recursive: true, force: true });
+});
