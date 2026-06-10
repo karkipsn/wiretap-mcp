@@ -22,11 +22,13 @@ It is **read-only** — it inspects session files; it cannot modify or replay tr
 | **Live mode** (`--live` / `WIRETAP_BRIDGE_URL`) | ✅ Built. Requires `WireTap.startLocalBridge()` in the running app. |
 | **MCP resources** (`wiretap://session/current`, `wiretap://session/{path}`) | ✅ Built. |
 | **Canned prompts** (`diagnose-disconnect`, `explain-network-failures`) | ✅ Built. |
-| **Automated test suite** | ✅ `npm test` — 10 tests including golden cross-language parity. |
+| **Production field reports** (Swift `WireTapReport`, TRACER-013) | ✅ Verified — a release-build report (BLE+NFC only, anonymized devices, `network: []`) parses with every tool; locked by `test/fixtures/report.wiretapsession`. |
+| **Automated test suite** | ✅ `npm test` — 12 tests including golden cross-language parity and the production-report fixture. |
 | Verified *inside* each named agent (Claude Code, Cursor, …) | ◻️ Speaks standard MCP stdio; protocol verified, per-app UX not individually confirmed. |
 
-**Who can produce sessions today:** only the **Swift `WireTap` package** emits `.wiretapsession`
-files (see TRACER-002/003). React Native / Flutter *can* feed this server, but **no exporter
+**Who can produce sessions today:** the **Swift `WireTap` package** — from a DEBUG capture
+(TRACER-002/003) **or** from a release build via `WireTapCore`'s `WireTapReport` (TRACER-013,
+BLE+NFC field diagnostics). React Native / Flutter *can* feed this server, but **no exporter
 or bridge ships for them yet** — you'd serialize to the [contract](#the-session-contract)
 yourself. The server is deliberately producer-agnostic; that just means the producer is your
 responsibility outside Swift.
@@ -36,12 +38,14 @@ responsibility outside Swift.
 ## How it fits the bigger picture
 
 ```
-Your app (running)                 wiretap-mcp (this)            AI agent
+Your app                           wiretap-mcp (this)            AI agent
 ──────────────────                 ─────────────────            ────────
-Swift WireTap pkg                                                any MCP client
+Swift WireTap pkg (DEBUG)                                        any MCP client
   startLocalBridge() ──live──────► fetch /session live   ──►   (Claude Code,
   exportSessionData() ──file─────► .wiretapsession JSON        Cursor, VS Code…)
-React Native  (DIY export) ──────►  read-only, redacted
+Swift WireTapCore (RELEASE)         read-only, redacted
+  WireTapReport ──field report────►
+React Native  (DIY export) ──────►
 Flutter       (DIY export) ──────►
 ```
 

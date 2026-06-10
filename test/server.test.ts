@@ -157,6 +157,46 @@ test("search finds matching events across all streams", async () => {
   await fs.rm(dir, { recursive: true, force: true });
 });
 
+// TRACER-013: a production WireTapReport export parses with every tool.
+// fixtures/report.wiretapsession was emitted by Swift WireTapReport (privacy: .standard) —
+// BLE+NFC only, network always [], device names anonymized to ***XXXX.
+test("TRACER-013: WireTapReport (release) session works with all tools", async () => {
+  const file = path.join(fixtures, "report.wiretapsession");
+
+  // overview — parses, counts the auth failure + disconnect, zero network
+  const overview = await tools.getOverview(file);
+  assert.match(overview, /network=0 ble=\d+ nfc=2/);
+  assert.match(overview, /errors: network=0 ble=2/);
+  assert.match(overview, /challenge timeout/);
+
+  // device names are anonymized — the full name must NOT appear anywhere
+  assert.doesNotMatch(overview, /MS2-A1B2/);
+  assert.match(overview, /\*\*\*A1B2/);
+
+  // timeline renders the full story in order
+  const timeline = await tools.getTimeline({ session: file });
+  assert.match(timeline, /tagDetected[\s\S]*connecting[\s\S]*authFailed[\s\S]*disconnected/);
+
+  // ble query filters on the report data
+  const auth = await tools.queryBle({ session: file, type: "authFailed" });
+  assert.match(auth, /authFailed/);
+  assert.match(auth, /challenge timeout/);
+
+  // decoded fields from the release-path decoder survive into tool output
+  const notif = await tools.queryBle({ session: file, type: "notification" });
+  assert.match(notif, /frameLen=2|frameLen.*2/);
+
+  // network failures tool handles the always-empty network array gracefully
+  const net = await tools.getNetworkFailures({ session: file });
+  assert.match(net, /none — all requests succeeded/);
+
+  // nfc + search work
+  const nfc = await tools.getNfcRecords(file);
+  assert.match(nfc, /vnd\.ms2\.ios-trust/);
+  const found = await tools.search({ session: file, query: "A1B2" });
+  assert.match(found, /\*\*\*A1B2/);
+});
+
 // Live mode: tools fetch session from a mock bridge (TRACER-004 AC-7/AC-8 Node side)
 test("live mode: tools fetch live session from running bridge", async () => {
   // Spin up a minimal HTTP server that mimics WireTap.startLocalBridge()

@@ -1,0 +1,83 @@
+{
+  "app" : {
+    "build" : "418",
+    "bundleId" : "co.hazesoft.ms2",
+    "name" : "MS2",
+    "version" : "3.2.0"
+  },
+  "ble" : [
+    {
+      "device" : "***A1B2",
+      "id" : "B986DEC1-C4A4-4AE5-9258-B35C6A9F2820",
+      "timestamp" : "2026-02-02T02:40:01.000Z",
+      "type" : "connecting"
+    },
+    {
+      "device" : "***A1B2",
+      "id" : "1EAEF9B9-C9DF-4E48-B780-4F950F745F0B",
+      "timestamp" : "2026-02-02T02:40:01.800Z",
+      "type" : "connected"
+    },
+    {
+      "decoded" : {
+        "frameLen" : "2",
+        "status" : "error"
+      },
+      "device" : "***A1B2",
+      "hex" : "01a4",
+      "id" : "557CDA5D-753D-4ACB-BEFC-FDF89BD9651C",
+      "timestamp" : "2026-02-02T02:40:02.200Z",
+      "type" : "notification",
+      "uuid" : "C0DEC0DE-1003-4B52-A3F1-9F49C1B6D801"
+    },
+    {
+      "device" : "***A1B2",
+      "id" : "DDA9F18B-78E8-4165-B239-290B5F796ECF",
+      "timestamp" : "2026-02-02T02:40:03.000Z",
+      "type" : "authStarted"
+    },
+    {
+      "device" : "***A1B2",
+      "error" : "challenge timeout after 1500ms",
+      "id" : "B03D6CE3-DDFD-4B37-BEC6-0DEC1163B10C",
+      "timestamp" : "2026-02-02T02:40:04.500Z",
+      "type" : "authFailed"
+    },
+    {
+      "device" : "***A1B2",
+      "error" : "peer removed pairing information",
+      "id" : "3B33E610-7E13-48FA-834D-D4AE143F3C51",
+      "timestamp" : "2026-02-02T02:40:05.000Z",
+      "type" : "disconnected"
+    }
+  ],
+  "environment" : {
+    "device" : "iPhone",
+    "locale" : "en_US",
+    "os" : "iOS",
+    "osVersion" : "18.4"
+  },
+  "exportedAt" : "2026-06-10T10:42:11.889Z",
+  "network" : [
+
+  ],
+  "nfc" : [
+    {
+      "descriptor" : "ISO7816",
+      "id" : "3DC86EB2-4E3A-4BF3-A3ED-BF4638E9D1AD",
+      "timestamp" : "2026-02-02T02:40:00.000Z",
+      "type" : "tagDetected"
+    },
+    {
+      "descriptor" : "application\/vnd.ms2.ios-trust",
+      "id" : "4344B96E-AD58-4F3C-936B-FB8F29A4CAB2",
+      "timestamp" : "2026-02-02T02:40:00.400Z",
+      "type" : "recordParsed"
+    }
+  ],
+  "range" : {
+    "end" : "2026-02-02T02:40:05.000Z",
+    "start" : "2026-02-02T02:40:00.000Z"
+  },
+  "schemaVersion" : 1
+}

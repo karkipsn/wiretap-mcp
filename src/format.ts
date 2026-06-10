@@ -39,6 +39,14 @@ export function summarizeBle(e: BleEntry): string {
   if (e.uuid) parts.push(`uuid=${e.uuid}`);
   if (e.device) parts.push(`device=${e.device}`);
   if (e.hex) parts.push(`hex=${truncateHex(e.hex)}`);
+  // decoded named fields (TRACER-005), same `{k=v}` shape as the llm.ts renderer
+  if (e.decoded && Object.keys(e.decoded).length) {
+    const fields = Object.keys(e.decoded)
+      .sort()
+      .map((k) => `${k}=${e.decoded![k]}`)
+      .join(" ");
+    parts.push(`{${fields}}`);
+  }
   if (e.detail) parts.push(`"${e.detail}"`);
   if (e.error) parts.push(`ERR=${e.error}`);
   return parts.join(" ");
